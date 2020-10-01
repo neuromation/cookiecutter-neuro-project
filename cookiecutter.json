@@ -1,5 +1,5 @@
 {
     "project_name": "Neuro Project",
     "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '-').replace('_', '-') }}",
-    "code_directory": "modules"
+    "code_directory": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}"
 }
