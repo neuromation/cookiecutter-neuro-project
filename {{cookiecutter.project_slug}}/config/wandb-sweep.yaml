@@ -1,0 +1,13 @@
+program: /project/{{cookiecutter.code_directory}}/train.py
+method: grid
+metric:
+  name: accuracy01/valid
+  goal: maximize
+parameters:
+  lr:
+    values: [0.1, 0.01, 0.001]
+  optimizer:
+    values: ['sgd', 'adam']
+  scheduler:
+    values: ['const', 'cosine']
+

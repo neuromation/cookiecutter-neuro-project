@@ -1,0 +1,67 @@
+kind: batch
+
+defaults:
+  preset: gpu-small
+
+params:
+  project:
+    descr: W&B project name
+  token:
+    descr: W&B auth token
+
+volumes:
+  data:
+    remote: storage:$[[ flow.project_id ]]/data
+    mount: /project/data
+  code:
+    remote: storage:$[[ flow.project_id ]]/{{ cookiecutter.code_directory }}
+    mount: /project/{{ cookiecutter.code_directory }}
+  config:
+    remote: storage:$[[ flow.project_id ]]/config
+    mount: /project/config
+    read_only: True
+  notebooks:
+    remote: storage:$[[ flow.project_id ]]/notebooks
+    mount: /project/notebooks
+  results:
+    remote: storage:$[[ flow.project_id ]]/results
+    mount: /project/results
+  project:
+    remote: storage:$[[ flow.project_id ]]
+    mount: /project
+
+images:
+  myimage:
+    ref: image:$[[ flow.project_id ]]
+    dockerfile: $[[ flow.workspace ]]/Dockerfile
+    context: $[[ flow.workspace ]]/
+    build_preset: cpu-small   
+
+tasks:
+  - id: start_sweep
+    image: $[[ images.myimage.ref ]]
+    volumes:
+      - $[[ volumes.config.ref ]]
+      - $[[ volumes.project.ref ]]
+    bash: |
+      wandb login $[[ params.token ]]
+      WANDB_SWEEPS_FILE="$[[ volumes.config.mount ]]/wandb-sweep.yaml"
+      SWEEP=$(WANDB_PROJECT=$[[ params.project ]] wandb sweep $WANDB_SWEEPS_FILE 2>&1 | grep 'sweep with ID:' | cut -d' ' -f6)
+      echo ::set-output name=sweep::${SWEEP}
+
+  - id: worker_$[[ matrix.id ]]
+    image: $[[ images.myimage.ref ]]
+    needs: [start_sweep]
+    strategy:
+      matrix:
+        id: [1, 2]
+    volumes:
+      - $[[ volumes.data.ref ]]
+      - $[[ volumes.code.ref ]]
+      - $[[ volumes.config.ref ]]
+      - $[[ volumes.notebooks.ref ]]
+      - $[[ volumes.results.ref ]]
+      - $[[ volumes.project.ref ]]
+    bash: |
+      wandb login $[[ params.token ]]
+      export WANDB_PROJECT=$[[ params.project ]] && cd $[[ volumes.project.mount ]] && wandb status && wandb agent $[[ needs.start_sweep.outputs.sweep ]]

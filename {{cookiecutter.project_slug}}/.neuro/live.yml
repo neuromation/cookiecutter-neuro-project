@@ -37,6 +37,7 @@ images:
     ref: image:$[[ flow.project_id ]]
     dockerfile: $[[ flow.workspace ]]/Dockerfile
     context: $[[ flow.workspace ]]/
+    build_preset: cpu-small
 
 jobs:
 
