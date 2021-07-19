@@ -1,7 +1,7 @@
 flake8==3.9.2
 mypy==0.910
 isort==5.9.2
-black==21.6b0
+black==21.7b0
 cookiecutter==1.7.3
 cryptography==3.4.7
 towncrier==21.3.0
